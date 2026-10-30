@@ -2,6 +2,8 @@
 
 This guide covers the current Docker Compose backend. The hosting provider and production deployment target remain open; production-specific backup storage, retention, alert thresholds, and recovery objectives must be set by the eventual operator.
 
+The Compose `frontend` service currently serves the static design prototype in `docs/design-prototypes/feature_2/`. It is only a preview so the flows can be explored; the production React frontend has not been implemented yet.
+
 ## Required configuration
 
 Keep deployment values in an environment-specific secret store. The root `.env` is for local use and is not committed. Required values are:
