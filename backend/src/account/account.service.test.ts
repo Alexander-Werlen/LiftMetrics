@@ -74,6 +74,10 @@ test('account deletion writes a minimal Auth0 outbox task and removes local user
   const transaction = {
     authIdentity: { findUnique: async () => { calls.push('find-identity'); return { subject: identity.subject }; } },
     accountDeletionTask: { create: async ({ data }: { data: unknown }) => { calls.push('create-task'); taskData = data; } },
+    weeklyPlanAssignment: { deleteMany: async () => { calls.push('delete-assignments'); } },
+    workoutSession: { deleteMany: async () => { calls.push('delete-workouts'); } },
+    blueprintExercise: { deleteMany: async () => { calls.push('delete-blueprint-exercises'); } },
+    sessionBlueprint: { deleteMany: async () => { calls.push('delete-blueprints'); } },
     user: { delete: async () => { calls.push('delete-user'); } },
   };
   const prisma = { $transaction: async (operation: (tx: typeof transaction) => Promise<void>) => operation(transaction) } as unknown as PrismaService;
@@ -81,7 +85,7 @@ test('account deletion writes a minimal Auth0 outbox task and removes local user
 
   await service.scheduleDeletion(account.id);
 
-  assert.deepEqual(calls, ['find-identity', 'create-task', 'delete-user']);
+  assert.deepEqual(calls, ['find-identity', 'create-task', 'delete-assignments', 'delete-workouts', 'delete-blueprint-exercises', 'delete-blueprints', 'delete-user']);
   assert.deepEqual(taskData, { subject: identity.subject });
 });
 

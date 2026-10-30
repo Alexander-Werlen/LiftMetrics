@@ -12,13 +12,27 @@ enum WeightUnit {
   LB
 }
 
+enum ExerciseMeasurementType {
+  REPS_AND_WEIGHT
+  TIME
+}
+
+enum WorkoutStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
 model User {
-  id                 String        @id @default(uuid()) @db.Uuid
-  timeZone           String        @db.VarChar(64)
+  id                  String             @id @default(uuid()) @db.Uuid
+  timeZone            String             @db.VarChar(64)
   preferredWeightUnit WeightUnit
-  createdAt          DateTime      @default(now()) @db.Timestamptz(6)
-  updatedAt          DateTime      @updatedAt @db.Timestamptz(6)
-  authIdentity       AuthIdentity?
+  createdAt           DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime           @updatedAt @db.Timestamptz(6)
+  authIdentity        AuthIdentity?
+  weightEntries       WeightEntry[]
+  blueprints          SessionBlueprint[]
+  weeklyPlans         WeeklyPlan[]
+  workoutSessions     WorkoutSession[]
 }
 
 model AuthIdentity {
@@ -33,13 +47,154 @@ model AuthIdentity {
 }
 
 model AccountDeletionTask {
-  id             String    @id @default(uuid()) @db.Uuid
-  subject        String    @db.VarChar(255)
-  attempts       Int       @default(0)
-  nextAttemptAt  DateTime  @default(now()) @db.Timestamptz(6)
-  lockedUntil    DateTime? @db.Timestamptz(6)
-  lastErrorCode   String?   @db.VarChar(100)
-  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+  id            String    @id @default(uuid()) @db.Uuid
+  subject       String    @db.VarChar(255)
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now()) @db.Timestamptz(6)
+  lockedUntil   DateTime? @db.Timestamptz(6)
+  lastErrorCode String?   @db.VarChar(100)
+  createdAt     DateTime  @default(now()) @db.Timestamptz(6)
 
   @@index([nextAttemptAt, createdAt])
+}
+
+model WeightEntry {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  entryDate DateTime @db.Date
+  weightKg  Decimal  @db.Decimal(7, 3)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entryDate])
+  @@unique([userId, id])
+  @@index([userId, entryDate(sort: Desc)])
+}
+
+model Exercise {
+  id               String                  @id @default(uuid()) @db.Uuid
+  name             String                  @db.VarChar(120)
+  measurementType  ExerciseMeasurementType
+  archivedAt       DateTime?               @db.Timestamptz(6)
+  createdAt        DateTime                @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime                @updatedAt @db.Timestamptz(6)
+  blueprintEntries BlueprintExercise[]
+  workoutEntries   WorkoutExercise[]
+}
+
+model SessionBlueprint {
+  id              String                 @id @default(uuid()) @db.Uuid
+  userId          String                 @db.Uuid
+  name            String                 @db.VarChar(120)
+  notes           String?                @db.Text
+  archivedAt      DateTime?              @db.Timestamptz(6)
+  createdAt       DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime               @updatedAt @db.Timestamptz(6)
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercises       BlueprintExercise[]
+  assignments     WeeklyPlanAssignment[]
+  workoutSessions WorkoutSession[]
+
+  @@unique([userId, id])
+  @@index([userId, archivedAt])
+}
+
+model BlueprintExercise {
+  id              String           @id @default(uuid()) @db.Uuid
+  userId          String           @db.Uuid
+  blueprintId     String           @db.Uuid
+  exerciseId      String           @db.Uuid
+  position        Int
+  plannedSetCount Int
+  targetRepMin    Int?
+  targetRepMax    Int?
+  blueprint       SessionBlueprint @relation(fields: [userId, blueprintId], references: [userId, id], onDelete: Cascade)
+  exercise        Exercise         @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, id])
+  @@unique([blueprintId, position])
+  @@unique([blueprintId, exerciseId])
+  @@index([userId, blueprintId])
+}
+
+model WeeklyPlan {
+  id          String                 @id @default(uuid()) @db.Uuid
+  userId      String                 @db.Uuid
+  name        String                 @db.VarChar(120)
+  isActive    Boolean                @default(false)
+  createdAt   DateTime               @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime               @updatedAt @db.Timestamptz(6)
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments WeeklyPlanAssignment[]
+
+  @@unique([userId, id])
+  @@index([userId, isActive])
+}
+
+model WeeklyPlanAssignment {
+  id           String           @id @default(uuid()) @db.Uuid
+  userId       String           @db.Uuid
+  weeklyPlanId String           @db.Uuid
+  blueprintId  String           @db.Uuid
+  weekday      Int
+  position     Int
+  weeklyPlan   WeeklyPlan       @relation(fields: [userId, weeklyPlanId], references: [userId, id], onDelete: Cascade)
+  blueprint    SessionBlueprint @relation(fields: [userId, blueprintId], references: [userId, id], onDelete: Restrict)
+
+  @@unique([userId, id])
+  @@unique([weeklyPlanId, weekday, position])
+  @@index([userId, weeklyPlanId, weekday])
+}
+
+model WorkoutSession {
+  id                 String            @id @default(uuid()) @db.Uuid
+  userId             String            @db.Uuid
+  sourceBlueprintId  String?           @db.Uuid
+  sourceNameSnapshot String?           @db.VarChar(120)
+  workoutDate        DateTime          @db.Date
+  status             WorkoutStatus     @default(IN_PROGRESS)
+  startedAt          DateTime          @default(now()) @db.Timestamptz(6)
+  completedAt        DateTime?         @db.Timestamptz(6)
+  createdAt          DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @db.Timestamptz(6)
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceBlueprint    SessionBlueprint? @relation(fields: [userId, sourceBlueprintId], references: [userId, id], onDelete: Restrict)
+  exercises          WorkoutExercise[]
+
+  @@unique([userId, id])
+  @@index([userId, workoutDate(sort: Desc)])
+}
+
+model WorkoutExercise {
+  id                      String                  @id @default(uuid()) @db.Uuid
+  userId                  String                  @db.Uuid
+  workoutSessionId        String                  @db.Uuid
+  exerciseId              String                  @db.Uuid
+  exerciseNameSnapshot    String                  @db.VarChar(120)
+  measurementTypeSnapshot ExerciseMeasurementType
+  position                Int
+  plannedSetCountSnapshot Int?
+  workoutSession          WorkoutSession          @relation(fields: [userId, workoutSessionId], references: [userId, id], onDelete: Cascade)
+  exercise                Exercise                @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  sets                    WorkoutSet[]
+
+  @@unique([userId, id])
+  @@unique([workoutSessionId, position])
+  @@unique([workoutSessionId, exerciseId])
+  @@index([userId, workoutSessionId])
+}
+
+model WorkoutSet {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @db.Uuid
+  workoutExerciseId String          @db.Uuid
+  position          Int
+  repetitions       Int?
+  weightKg          Decimal?        @db.Decimal(7, 3)
+  durationSeconds   Int?
+  workoutExercise   WorkoutExercise @relation(fields: [userId, workoutExerciseId], references: [userId, id], onDelete: Cascade)
+
+  @@unique([workoutExerciseId, position])
+  @@index([userId, workoutExerciseId])
 }

@@ -58,6 +58,12 @@ export class AccountService {
       const identity = await transaction.authIdentity.findUnique({ where: { userId: accountId }, select: { subject: true } });
       if (!identity) throw new NotFoundException('Account not found');
       await transaction.accountDeletionTask.create({ data: { subject: identity.subject } });
+      // Clear references that deliberately RESTRICT deletion during normal use.
+      // Account deletion is the explicit operation that removes the full history.
+      await transaction.weeklyPlanAssignment.deleteMany({ where: { userId: accountId } });
+      await transaction.workoutSession.deleteMany({ where: { userId: accountId } });
+      await transaction.blueprintExercise.deleteMany({ where: { userId: accountId } });
+      await transaction.sessionBlueprint.deleteMany({ where: { userId: accountId } });
       await transaction.user.delete({ where: { id: accountId } });
     });
   }
