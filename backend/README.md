@@ -16,6 +16,8 @@ After starting Compose, apply committed migrations with `docker compose run --rm
 
 Load the shared exercise catalog after applying migrations with `cd backend && npm run prisma:seed`. The seed is safe to rerun: it matches normalized names, preserves archived rows, and fails if an existing exercise's measurement type differs from the version-controlled catalog. The catalog is read-only through the API: `GET /api/exercises` browses active exercises, and `GET /api/exercises/:id` also returns archived exercises so existing references can still be displayed. Both endpoints require a valid bearer access token.
 
+Weight entries use `PUT /api/weight-entries/YYYY-MM-DD` with a decimal-string `weight` and explicit `unit` (`KG` or `LB`); saving the same date corrects its value. The date is a calendar day in the account's fixed time zone. Reads use `GET /api/weight-entries/YYYY-MM-DD` or `GET /api/weight-entries`, optionally filtered by inclusive `from`/`to` dates. Reads default to the account's preferred unit; values are returned to 0.001 precision in that unit. Writes echo the submitted unit and value. Pounds are converted using `1 lb = 0.45359237 kg`, then rounded half up to 0.001 kg for storage. Entry weight inputs accept up to six fractional digits.
+
 ## Configuration
 
 `DATABASE_URL` is required and validated at startup. `PORT`, `NODE_ENV`, and the deletion-worker interval have local defaults. Compose also requires `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`; provide them in an untracked root `.env`. Do not commit real credentials.

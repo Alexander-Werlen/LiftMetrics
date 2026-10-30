@@ -6,6 +6,7 @@ import { AccountModule } from './account/account.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ExerciseModule } from './exercise/exercise.module';
+import { WeightModule } from './weight/weight.module';
 
 const environmentSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
@@ -39,6 +40,7 @@ const environmentSchema = Joi.object({
     HealthModule,
     AccountModule,
     ExerciseModule,
+    WeightModule,
   ],
 })
 export class AppModule implements NestModule {

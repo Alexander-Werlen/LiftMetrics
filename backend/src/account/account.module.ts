@@ -13,5 +13,6 @@ import { LocalAccountGuard } from './local-account.guard';
   controllers: [AccountController],
   providers: [AccountService, Auth0ManagementClient, AccountDeletionWorker, Auth0AccessTokenGuard,
     LocalAccountGuard, IanaTimeZoneConstraint],
+  exports: [AccountService, LocalAccountGuard],
 })
 export class AccountModule {}
