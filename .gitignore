@@ -3,4 +3,8 @@
 backend/node_modules/
 backend/dist/
 backend/*.tsbuildinfo
+frontend/node_modules/
+frontend/build/
+frontend/.react-router/
+frontend/*.tsbuildinfo
 ops/postgres-data/

@@ -122,7 +122,7 @@ Today shows the current day's weight and either the scheduled workout recommenda
 
 ### Record and complete a workout
 
-Start from the Today recommendation or resume an in-progress session. The workout prototype exposes two modes for review: **One at a time**, which focuses on the current exercise, and **All exercises**, which shows the ordered exercise list and set values together. In either mode, users can change sets and exercises, move through the session, leave and resume it, and complete it. Completion returns to the daily screen and makes the session available in history.
+Start from the Today recommendation or resume an in-progress session. Production uses **All exercises** as the default: the ordered exercise list stays visible and users expand an exercise to edit its sets. The prototype keeps **One at a time** as a comparison mode only. Users can change sets and exercises, leave and resume the session, and complete it. Completion returns to Today and makes the session available in History.
 
 ### Review and correct history
 
@@ -134,10 +134,8 @@ flowchart TD
     Today -->|Start recommendation| Workout[Workout in progress]
     Today -->|Resume| Workout
     Today -->|No workout scheduled| Empty[No workout scheduled state]
-    Workout --> Focus[One at a time]
-    Workout --> Overview[All exercises and sets]
-    Focus --> Edit[Edit sets or exercises]
-    Overview --> Edit
+    Workout --> Overview[All exercises overview]
+    Overview --> Edit[Expand exercise and edit sets or exercises]
     Edit --> Workout
     Workout -->|Leave| Resume[Return to Today]
     Resume -->|Resume workout| Workout
@@ -175,15 +173,37 @@ Build the frontend in small, runnable increments. Each step leaves the app build
 
 ### 1. Close the design and API handoff
 
-Inspect the OpenAPI document and response DTOs for account provisioning/preferences, today's recommendation, in-progress workout, weight entries, workout lifecycle/history, weekly plans, blueprints, and exercise search. Update the prototype and flow notes to compare the one-at-a-time and all-exercises workout views. Decide the workout navigation model and make the minimum Plan/history-detail choices needed for implementation; keep lower-priority details open when they do not block a slice.
+The current backend contracts cover the planned production flows:
 
-**Checkpoint:** A route-to-API map names the endpoint for every production flow and records any real contract gap. The selected workout recording interaction and the user paths for Today, History, and Plan are documented. No prototype sample data or local-storage behavior is described as production persistence.
+| Frontend flow | Existing API contract | Client notes |
+| --- | --- | --- |
+| Account setup and preferences | `POST`, `GET`, `PATCH /api/account` | First provisioning requires IANA `timeZone` and `preferredWeightUnit`; time zone is immutable. Use the account time zone to derive the displayed current day. |
+| Today's weight | `GET /api/weight-entries/:entryDate`, `PUT /api/weight-entries/:entryDate` | Date is `YYYY-MM-DD` in the account's local calendar. Use decimal strings and explicit `KG`/`LB`; the write is also the correction operation. |
+| Weight history and correction | `GET /api/weight-entries?from=&to=&unit=&limit=&before=` | Returns `{ items, nextCursor }`, newest first; use inclusive date bounds and the exclusive `before` cursor. The API returns source entries, not chart aggregates. |
+| Today's recommendation | `GET /api/weekly-plans/recommendation/today` | Returns local `date`, nullable active `weeklyPlan`, and ordered `sessions`; an empty session list means no recommendation. Each session includes its assignment ID and blueprint prescription. |
+| Start a scheduled workout | `POST /api/workout-sessions/from-recommendation/:assignmentId` | Pass the chosen recommendation's assignment ID. A second in-progress workout is a conflict, so refresh the in-progress lookup after a conflict. |
+| Start an ad hoc workout | `POST /api/workout-sessions` | Available for a user-created workout when the reviewed flow includes it; this does not create or edit a reusable blueprint. |
+| Resume and record a workout | `GET /api/workout-sessions/in-progress`, `GET /api/workout-sessions/:id`, `PUT /api/workout-sessions/:id`, `POST /api/workout-sessions/:id/complete` | In-progress lookup may return `null`. `PUT` replaces the ordered exercise/set collection, so the client must submit the full current state and avoid dropping unsaved values. Completed records can also be corrected with `PUT`. |
+| Exercise selection | `GET /api/exercises?q=` and `GET /api/exercises/:id` | Search returns active catalog items; each item declares fixed `REPS_AND_WEIGHT` or `TIME` measurement type. Existing archived references can still be read by ID. |
+| Workout history and detail | `GET /api/workout-sessions?from=&to=&status=&unit=&limit=&cursor=`, `GET /api/workout-sessions/:id` | Returns `{ items, nextCursor }`; use cursor pagination. Detail includes ordered exercise snapshots and recorded sets. |
+| Weekly plans | `GET`, `POST /api/weekly-plans`; `GET`, `PUT /api/weekly-plans/:id`; `POST /api/weekly-plans/:id/activate` and `/deactivate` | Assignment array order defines order within a weekday. Weekdays use ISO numbering, Monday=1 through Sunday=7. |
+| Saved workouts | `GET`, `POST /api/session-blueprints`; `GET`, `PUT /api/session-blueprints/:id`; `POST /api/session-blueprints/:id/archive` | Blueprint updates replace the full ordered exercise prescription. Optional repetition targets are valid only for repetitions-plus-weight exercises. |
+
+No blocking API contract gap was found for the intended frontend flows. Weight trend data can be derived in the client from date-filtered weight-entry pages; a summary or chart endpoint remains out of scope. API errors use a common response with `statusCode`, `error`, `message`, `requestId`, `path`, and `timestamp`; field validation can return an array of messages.
+
+The production workout interaction is settled as an **all-exercises overview by default**. Each exercise expands inline to show and edit its sets; the overview keeps exercise order and workout progress visible, avoiding repeated next/previous navigation. Set entry must remain touch-friendly and preserve drafts when panels open or close. The prototype's one-at-a-time view remains a comparison artifact and is not required as a second production mode for the first release.
+
+Keep **Plan** as the single destination for active weekly-plan selection, weekday assignments, and reusable workout management. Unassigned days represent rest/no scheduled session; multiple sessions on a day remain supported, with Today asking the user which one to start. If no plan is active, Plan offers creation/activation and Today remains in its no-workout state.
+
+Keep **History → All workouts → Workout detail** as the workout-record path. History's weight chart is client-derived from the selected date range of weight entries (90 days by default); the dated entry list can continue through the API cursor. Workout history is separately cursor-paginated. This avoids adding chart or summary endpoints while keeping the main screen compact.
+
+**Checkpoint — complete:** The route-to-API map names the endpoint for every production flow; no blocking contract gap was found. The production workout interaction and the user paths for Today, History, and Plan are documented. The one-at-a-time prototype view remains an exploration artifact, and no sample data or local-storage behavior is described as production persistence.
 
 ### 2. Create the runnable client shell
 
 Create the React/TypeScript application in a dedicated frontend workspace using React Router Framework Mode with runtime SSR disabled. Add the build and start scripts, route fallback, dark mobile-first design tokens, accessible buttons/forms/inputs, and a minimal responsive shell for Today, History, and Plan. Replace the temporary prototype mount in Docker Compose with the built client while keeping `/api` proxying intact.
 
-**Checkpoint:** From a clean checkout, the documented Compose stack builds and serves the client through the same-origin proxy. Direct navigation and refresh on each client route load the app; `/api/health`, `/api/docs`, and `/api/openapi.json` still reach the backend. The app adapts from a phone viewport to a desktop width.
+**Checkpoint — complete:** Compose builds and serves the client through the same-origin proxy. Direct requests to `/`, `/history`, `/plan`, and an unknown client path return the SPA entry document; `/api/health`, `/api/docs`, and `/api/openapi.json` still reach the backend. The shell includes phone and desktop layouts and the React Router build runs with `ssr: false`.
 
 ### 3. Add authenticated account setup and the shared API layer
 
@@ -223,11 +243,9 @@ Review all implemented routes at phone and desktop sizes, keyboard-only operatio
 
 ## Open design decisions
 
-- Workout entry: choose the one-at-a-time view, whole-workout overview, or a hybrid, and determine how exercise navigation and inline edits work.
-- Saved-workout editing: decide how the user browses and chooses exercises, and how the interface presents fixed measurement types and targets.
-- Multiple workouts per day: confirm whether this scheduling rule is intended for normal use and, if so, settle the Today selection and schedule ordering behavior.
-- History: validate discoverability of **History → All workouts**, and decide which range controls, paging, and workout-detail affordances are needed for the first release.
-- Failure and edge states: specify behavior for plan activation/update errors, no active plan, stale recommendations, and a saved-workout edit during an in-progress workout when mapping API behavior.
+- Saved-workout editing: refine how users search/select exercises and enter optional targets during the Plan implementation slice; preserve the API's fixed measurement types and validation.
+- History range controls: validate the 90-day default during usability review and decide whether additional range shortcuts are needed for the first release.
+- Failure and edge states: refine recovery copy and interaction details for plan activation/update failures, stale recommendations, and a saved-workout edit while a workout is in progress. The API snapshots started workouts, so editing a blueprint does not alter the active workout.
 
 ## Completion criteria
 
