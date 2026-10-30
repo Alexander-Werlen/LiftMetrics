@@ -20,7 +20,10 @@ async function bootstrap(): Promise<void> {
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
   app.useGlobalFilters(new ApiExceptionFilter());
   const configBuilder = new DocumentBuilder().setTitle('LiftMetrics API')
-    .setDescription('REST API for LiftMetrics account and training data.').setVersion('0.1.0').build();
+    .setDescription('REST API for LiftMetrics account and training data.')
+    .setVersion('0.1.0')
+    .addBearerAuth()
+    .build();
   SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, configBuilder), {
     jsonDocumentUrl: 'api/openapi.json',
   });

@@ -12,10 +12,16 @@ The same-origin entry point is `http://localhost:8080`. The API is under `/api`,
 
 The database and API share a Docker network marked internal. Only the reverse proxy publishes a host port. For local development without Docker, install dependencies with `npm ci`, set `DATABASE_URL` to a reachable PostgreSQL instance, then run `npm run start:dev` from `backend/`.
 
+After starting Compose, apply committed migrations with `docker compose run --rm migrate`. This one-off service uses the build image (which contains the Prisma CLI and schema files) and shares only the internal database network. The running API image stays lean and does not include migration tooling. Run the focused backend checks with `cd backend && npm test`.
+
 ## Configuration
 
-`DATABASE_URL` is required and validated at startup. `PORT` and `NODE_ENV` have safe local defaults. Compose also requires `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`; provide them in an untracked root `.env`. Do not commit real credentials. Auth0 configuration is added with the account identity step.
+`DATABASE_URL` is required and validated at startup. `PORT`, `NODE_ENV`, and the deletion-worker interval have local defaults. Compose also requires `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`; provide them in an untracked root `.env`. Do not commit real credentials.
+
+Account authentication requires `AUTH0_ISSUER`, `AUTH0_API_AUDIENCE`, and a comma-separated `AUTH0_CLIENT_IDS` allowlist. Local health checks can run without an Auth0 tenant configured, but authenticated account routes return service unavailable until these values are set. Production startup requires the Auth0 API configuration and a Management API machine-to-machine client (`AUTH0_MGMT_CLIENT_ID`, `AUTH0_MGMT_CLIENT_SECRET`, `AUTH0_MGMT_AUDIENCE`) authorized for the `delete:users` scope. Account deletion is accepted only when the retry worker can be configured.
 
 ## Database and API notes
 
-Prisma's schema is in `prisma/schema.prisma`; committed migrations will be added with the domain schema step. Generate its client with `npm run prisma:generate`. Health reports process liveness independently from readiness so an unavailable database does not make the liveness endpoint fail. Every response gets a request ID; structured request and server-error logs include that ID and omit request bodies and query values.
+Prisma's schema and migration contain the initial account tables; later domain tables are added in the schema step. Generate its client with `npm run prisma:generate`. Health reports process liveness independently from readiness so an unavailable database does not make the liveness endpoint fail. Every response gets a request ID; structured request and server-error logs include that ID and omit request bodies and query values.
+
+The account endpoints are `POST`, `GET`, `PATCH`, and `DELETE /api/account`. The first `POST` provisions a local account for the validated Auth0 `(iss, sub)` identity and requires the user's IANA time zone and preferred weight unit. Repeated provisioning for that identity returns the existing account. The time zone cannot be changed later. `DELETE` removes local account rows in a database transaction and creates a minimal outbox task containing only the Auth0 subject; a worker calls Auth0 and retries failures with capped exponential backoff. A 404 from Auth0 is treated as already deleted, so a crash after remote deletion is safe to retry.

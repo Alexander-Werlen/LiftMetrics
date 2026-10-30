@@ -6,3 +6,40 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum WeightUnit {
+  KG
+  LB
+}
+
+model User {
+  id                 String        @id @default(uuid()) @db.Uuid
+  timeZone           String        @db.VarChar(64)
+  preferredWeightUnit WeightUnit
+  createdAt          DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime      @updatedAt @db.Timestamptz(6)
+  authIdentity       AuthIdentity?
+}
+
+model AuthIdentity {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @db.Uuid
+  issuer    String   @db.VarChar(255)
+  subject   String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issuer, subject], name: "issuer_subject")
+}
+
+model AccountDeletionTask {
+  id             String    @id @default(uuid()) @db.Uuid
+  subject        String    @db.VarChar(255)
+  attempts       Int       @default(0)
+  nextAttemptAt  DateTime  @default(now()) @db.Timestamptz(6)
+  lockedUntil    DateTime? @db.Timestamptz(6)
+  lastErrorCode   String?   @db.VarChar(100)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([nextAttemptAt, createdAt])
+}
