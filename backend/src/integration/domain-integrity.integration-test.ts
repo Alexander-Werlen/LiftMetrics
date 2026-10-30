@@ -67,10 +67,17 @@ test('PostgreSQL domain integrity and two-user isolation', async () => {
     await weight.save(accountA, '2026-10-30', { weight: '80.125', unit: WeightUnit.KG });
     await weight.save(accountB, '2026-10-30', { weight: '200', unit: WeightUnit.LB });
     await weight.save(accountA, '2026-10-30', { weight: '81', unit: WeightUnit.KG });
+    await weight.save(accountA, '2026-10-29', { weight: '80', unit: WeightUnit.KG });
     assert.equal((await weight.get(accountA, '2026-10-30')).weight, '81.000');
     // Stored loads are canonicalized to whole grams; a kg/lb round trip can lose 0.001 lb.
     assert.equal((await weight.get(accountB, '2026-10-30')).weight, '199.999');
-    assert.equal((await weight.history(accountA, {})).length, 1);
+    const firstWeightPage = await weight.history(accountA, { limit: 1 });
+    assert.equal(firstWeightPage.items[0].entryDate, '2026-10-30');
+    assert.equal(firstWeightPage.nextCursor, '2026-10-30');
+    const secondWeightPage = await weight.history(accountA, { limit: 1, before: firstWeightPage.nextCursor! });
+    assert.equal(secondWeightPage.items[0].entryDate, '2026-10-29');
+    assert.equal(secondWeightPage.nextCursor, null);
+    assert.equal((await weight.history(accountA, {})).items.length, 2);
     await assert.rejects(
       prisma.weightEntry.create({ data: { userId: userAId, entryDate: new Date('2026-10-30T00:00:00.000Z'), weightKg: '82.000' } }),
       (error: { code?: string }) => error.code === 'P2002',
@@ -121,7 +128,7 @@ test('PostgreSQL domain integrity and two-user isolation', async () => {
     assert.deepEqual(started.exercises.map((entry) => [entry.plannedSetCountSnapshot, entry.targetRepMinSnapshot, entry.targetRepMaxSnapshot]), [
       [3, 8, 12], [2, null, null],
     ]);
-    assert.equal((await workouts.list(accountB, {})).length, 0);
+    assert.equal((await workouts.list(accountB, {})).items.length, 0);
     assert.equal(await workouts.inProgress(accountB), null);
     await assert.rejects(workouts.get(accountB, workoutAId), NotFoundException);
     await assert.rejects(workouts.complete(accountB, workoutAId), NotFoundException);

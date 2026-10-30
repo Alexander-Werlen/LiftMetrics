@@ -4,11 +4,14 @@ import { Auth0AccessTokenGuard } from '../auth/auth0-access-token.guard';
 import { CurrentAccount } from '../auth/auth-principal.decorator';
 import { AccountContext } from '../auth/auth.types';
 import { LocalAccountGuard } from '../account/local-account.guard';
+import { ApiCommonProtectedResponses } from '../common/api-common-responses';
+import { ApiErrorResponseDto } from '../common/api-error.dto';
 import { CreateWeeklyPlanDto, DailyRecommendationResponse, UpdateWeeklyPlanDto, WeeklyPlanResponse } from './weekly-plan.dto';
 import { WeeklyPlanService } from './weekly-plan.service';
 
 @ApiTags('weekly plans')
 @ApiBearerAuth()
+@ApiCommonProtectedResponses()
 @UseGuards(Auth0AccessTokenGuard, LocalAccountGuard)
 @Controller('api/weekly-plans')
 export class WeeklyPlanController {
@@ -17,7 +20,7 @@ export class WeeklyPlanController {
   @Post()
   @ApiOperation({ summary: 'Create a weekly plan and its weekday assignments' })
   @ApiCreatedResponse({ type: WeeklyPlanResponse })
-  @ApiBadRequestResponse({ description: 'The plan name or assignments are invalid.' })
+  @ApiBadRequestResponse({ type: ApiErrorResponseDto, description: 'The plan name or assignments are invalid.' })
   create(@CurrentAccount() account: AccountContext, @Body() input: CreateWeeklyPlanDto) {
     return this.plans.create(account, input);
   }
@@ -39,7 +42,7 @@ export class WeeklyPlanController {
   @Get(':id')
   @ApiOperation({ summary: 'Read one weekly plan and its ordered assignments' })
   @ApiOkResponse({ type: WeeklyPlanResponse })
-  @ApiNotFoundResponse({ description: 'The plan does not exist for this user.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The plan does not exist for this user.' })
   get(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.plans.get(account, id);
   }
@@ -47,8 +50,8 @@ export class WeeklyPlanController {
   @Put(':id')
   @ApiOperation({ summary: 'Replace a weekly plan’s name and assignments' })
   @ApiOkResponse({ type: WeeklyPlanResponse })
-  @ApiBadRequestResponse({ description: 'The plan name or assignments are invalid.' })
-  @ApiNotFoundResponse({ description: 'The plan does not exist for this user.' })
+  @ApiBadRequestResponse({ type: ApiErrorResponseDto, description: 'The plan name or assignments are invalid.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The plan does not exist for this user.' })
   update(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string, @Body() input: UpdateWeeklyPlanDto) {
     return this.plans.update(account, id, input);
   }
@@ -57,8 +60,8 @@ export class WeeklyPlanController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Activate this plan and deactivate any other plan for the user' })
   @ApiOkResponse({ type: WeeklyPlanResponse })
-  @ApiConflictResponse({ description: 'Another weekly plan was activated concurrently.' })
-  @ApiNotFoundResponse({ description: 'The plan does not exist for this user.' })
+  @ApiConflictResponse({ type: ApiErrorResponseDto, description: 'Another weekly plan was activated concurrently.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The plan does not exist for this user.' })
   activate(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.plans.activate(account, id);
   }
@@ -67,7 +70,7 @@ export class WeeklyPlanController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Deactivate this plan' })
   @ApiOkResponse({ type: WeeklyPlanResponse })
-  @ApiNotFoundResponse({ description: 'The plan does not exist for this user.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The plan does not exist for this user.' })
   deactivate(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.plans.deactivate(account, id);
   }

@@ -31,3 +31,19 @@ export class UpdateAccountDto {
   @IsEnum(WeightUnit)
   preferredWeightUnit?: WeightUnit;
 }
+
+export class AccountResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ example: 'America/Argentina/Buenos_Aires' })
+  timeZone!: string;
+
+  @ApiProperty({ enum: WeightUnit, enumName: 'WeightUnit' })
+  preferredWeightUnit!: WeightUnit;
+}
+
+export class AccountDeletionAcceptedResponseDto {
+  @ApiProperty({ enum: ['deletion_scheduled'], example: 'deletion_scheduled' })
+  status!: 'deletion_scheduled';
+}

@@ -5,11 +5,14 @@ import { Auth0AccessTokenGuard } from '../auth/auth0-access-token.guard';
 import { CurrentAccount } from '../auth/auth-principal.decorator';
 import { AccountContext } from '../auth/auth.types';
 import { LocalAccountGuard } from '../account/local-account.guard';
-import { StartAdHocWorkoutDto, UpdateWorkoutDto, WorkoutHistoryQuery, WorkoutResponse } from './workout.dto';
+import { ApiCommonProtectedResponses } from '../common/api-common-responses';
+import { ApiErrorResponseDto } from '../common/api-error.dto';
+import { StartAdHocWorkoutDto, UpdateWorkoutDto, WorkoutHistoryPageResponse, WorkoutHistoryQuery, WorkoutResponse } from './workout.dto';
 import { WorkoutService } from './workout.service';
 
 @ApiTags('workout sessions')
 @ApiBearerAuth()
+@ApiCommonProtectedResponses()
 @UseGuards(Auth0AccessTokenGuard, LocalAccountGuard)
 @Controller('api/workout-sessions')
 export class WorkoutController {
@@ -18,8 +21,8 @@ export class WorkoutController {
   @Post()
   @ApiOperation({ summary: 'Start an ad hoc workout without a session blueprint' })
   @ApiCreatedResponse({ type: WorkoutResponse })
-  @ApiBadRequestResponse({ description: 'The optional name or local date is invalid.' })
-  @ApiConflictResponse({ description: 'This user already has an in-progress workout.' })
+  @ApiBadRequestResponse({ type: ApiErrorResponseDto, description: 'The optional name or local date is invalid.' })
+  @ApiConflictResponse({ type: ApiErrorResponseDto, description: 'This user already has an in-progress workout.' })
   startAdHoc(@CurrentAccount() account: AccountContext, @Body() input: StartAdHocWorkoutDto) {
     return this.workouts.startAdHoc(account, input);
   }
@@ -27,16 +30,18 @@ export class WorkoutController {
   @Post('from-recommendation/:assignmentId')
   @ApiOperation({ summary: 'Start today’s scheduled recommendation and copy its exercise prescription' })
   @ApiCreatedResponse({ type: WorkoutResponse })
-  @ApiConflictResponse({ description: 'This user already has an in-progress workout.' })
-  @ApiNotFoundResponse({ description: 'The assignment is not on today’s active plan.' })
+  @ApiConflictResponse({ type: ApiErrorResponseDto, description: 'This user already has an in-progress workout.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The assignment is not on today’s active plan.' })
   startRecommendation(@CurrentAccount() account: AccountContext, @Param('assignmentId', new ParseUUIDPipe()) assignmentId: string) {
     return this.workouts.startRecommendation(account, assignmentId);
   }
 
   @Get()
   @ApiOperation({ summary: 'List this user’s workouts, newest workout date first' })
-  @ApiOkResponse({ type: WorkoutResponse, isArray: true })
-  @ApiBadRequestResponse({ description: 'A date range is invalid.' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, minimum: 1, maximum: 100, description: 'Maximum workouts to return; defaults to 50.' })
+  @ApiQuery({ name: 'cursor', required: false, type: String, format: 'uuid', description: 'Exclusive cursor from the previous page response.' })
+  @ApiOkResponse({ type: WorkoutHistoryPageResponse })
+  @ApiBadRequestResponse({ type: ApiErrorResponseDto, description: 'The date range, page size, or cursor is invalid.' })
   list(@CurrentAccount() account: AccountContext, @Query() query: WorkoutHistoryQuery) {
     return this.workouts.list(account, query);
   }
@@ -56,7 +61,7 @@ export class WorkoutController {
   @ApiOperation({ summary: 'Read one workout and its ordered exercises and sets' })
   @ApiQuery({ name: 'unit', required: false, enum: WeightUnit })
   @ApiOkResponse({ type: WorkoutResponse })
-  @ApiNotFoundResponse({ description: 'The workout does not exist for this user.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The workout does not exist for this user.' })
   get(
     @CurrentAccount() account: AccountContext,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -68,8 +73,8 @@ export class WorkoutController {
   @Put(':id')
   @ApiOperation({ summary: 'Replace workout date, ordered exercises, and their sets; corrects completed records too' })
   @ApiOkResponse({ type: WorkoutResponse })
-  @ApiBadRequestResponse({ description: 'Exercise selection or set values do not match the exercise measurement type.' })
-  @ApiNotFoundResponse({ description: 'The workout does not exist for this user.' })
+  @ApiBadRequestResponse({ type: ApiErrorResponseDto, description: 'Exercise selection or set values do not match the exercise measurement type.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The workout does not exist for this user.' })
   update(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string, @Body() input: UpdateWorkoutDto) {
     return this.workouts.update(account, id, input);
   }
@@ -78,7 +83,7 @@ export class WorkoutController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Complete an in-progress workout' })
   @ApiOkResponse({ type: WorkoutResponse })
-  @ApiNotFoundResponse({ description: 'The workout does not exist for this user.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The workout does not exist for this user.' })
   complete(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.workouts.complete(account, id);
   }
@@ -87,7 +92,7 @@ export class WorkoutController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a workout and its exercises and sets' })
   @ApiNoContentResponse({ description: 'Workout and child records were deleted.' })
-  @ApiNotFoundResponse({ description: 'The workout does not exist for this user.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The workout does not exist for this user.' })
   async delete(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string): Promise<void> {
     await this.workouts.delete(account, id);
   }

@@ -1,6 +1,7 @@
 import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
+import { ApiErrorResponseDto } from '../common/api-error.dto';
 
 @ApiTags('operations')
 @Controller('api')
@@ -13,7 +14,7 @@ export class HealthController {
   @Get('ready')
   @ApiOperation({ summary: 'Readiness check including PostgreSQL connectivity' })
   @ApiResponse({ status: 200, description: 'The service and database are ready.' })
-  @ApiResponse({ status: 503, description: 'The database dependency is unavailable.' })
+  @ApiResponse({ status: 503, type: ApiErrorResponseDto, description: 'The database dependency is unavailable.' })
   async readiness(): Promise<{ status: 'ready' }> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;

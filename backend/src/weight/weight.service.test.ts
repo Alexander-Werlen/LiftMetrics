@@ -126,17 +126,18 @@ test('history is owner-scoped, date-filterable, and returned newest date first i
   } as unknown as PrismaService;
   const service = new WeightService(prisma);
 
-  const result = await service.history(account, { from: '2026-10-01', to: '2026-10-02', unit: WeightUnit.KG });
+  const result = await service.history(account, { from: '2026-10-01', to: '2026-10-02', unit: WeightUnit.KG, limit: 1 });
 
   assert.deepEqual(findArgs, {
     where: { userId: account.id, entryDate: { gte: new Date('2026-10-01T00:00:00.000Z'), lte: new Date('2026-10-02T00:00:00.000Z') } },
     orderBy: { entryDate: 'desc' },
+    take: 2,
     select: { id: true, entryDate: true, weightKg: true, createdAt: true, updatedAt: true },
   });
-  assert.deepEqual(result.map((entry) => [entry.id, entry.entryDate, entry.weight, entry.unit]), [
+  assert.deepEqual(result.items.map((entry) => [entry.id, entry.entryDate, entry.weight, entry.unit]), [
     ['new', '2026-10-02', '80.000', WeightUnit.KG],
-    ['old', '2026-10-01', '79.000', WeightUnit.KG],
   ]);
+  assert.equal(result.nextCursor, '2026-10-02');
 });
 
 test('rejects inverted history ranges and returns not found for missing owner dates', async () => {

@@ -18,6 +18,7 @@ const blueprintId = '40000000-0000-4000-8000-000000000004';
 const assignmentId = '50000000-0000-4000-8000-000000000005';
 const repsExerciseId = '60000000-0000-4000-8000-000000000006';
 const timeExerciseId = '70000000-0000-4000-8000-000000000007';
+const secondWorkoutId = '80000000-0000-4000-8000-000000000008';
 
 function workoutRecord(overrides: Record<string, unknown> = {}) {
   return {
@@ -35,6 +36,45 @@ function workoutRecord(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+test('paginates workout history with an owner-scoped stable cursor', async () => {
+  const olderStartedAt = new Date('2026-10-29T10:00:00.000Z');
+  let findArgs: any;
+  let cursorRead: unknown;
+  const prisma = {
+    workoutSession: {
+      findFirst: async (args: unknown) => {
+        cursorRead = args;
+        return { id: workoutId, workoutDate: new Date('2026-10-30T00:00:00.000Z'), startedAt: new Date('2026-10-30T10:00:00.000Z') };
+      },
+      findMany: async (args: unknown) => {
+        findArgs = args;
+        if (Array.isArray((args as { where?: { AND?: unknown[] } }).where?.AND)) {
+          return [workoutRecord({ id: secondWorkoutId, workoutDate: new Date('2026-10-29T00:00:00.000Z'), startedAt: olderStartedAt })];
+        }
+        return [workoutRecord(), workoutRecord({ id: secondWorkoutId, workoutDate: new Date('2026-10-29T00:00:00.000Z'), startedAt: olderStartedAt })];
+      },
+    },
+  } as unknown as PrismaService;
+  const service = new WorkoutService(prisma);
+
+  const first = await service.list(account, { limit: 1 });
+  assert.equal(first.items.length, 1);
+  assert.equal(first.nextCursor, workoutId);
+  assert.equal(findArgs.take, 2);
+  assert.deepEqual(findArgs.where, { userId: account.id });
+
+  await service.list(account, { limit: 1, cursor: workoutId });
+  assert.deepEqual(cursorRead, { where: { id: workoutId, userId: account.id }, select: { id: true, workoutDate: true, startedAt: true } });
+  assert.deepEqual(findArgs.where, { AND: [
+    { userId: account.id },
+    { OR: [
+      { workoutDate: { lt: new Date('2026-10-30T00:00:00.000Z') } },
+      { workoutDate: new Date('2026-10-30T00:00:00.000Z'), startedAt: { lt: new Date('2026-10-30T10:00:00.000Z') } },
+      { workoutDate: new Date('2026-10-30T00:00:00.000Z'), startedAt: new Date('2026-10-30T10:00:00.000Z'), id: { gt: workoutId } },
+    ] },
+  ] });
+});
 
 test('starts an ad hoc workout without a blueprint using the owner and local date', async () => {
   let args: unknown;

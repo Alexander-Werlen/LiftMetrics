@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { WeightUnit } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 
 export class SaveWeightEntryDto {
   @ApiProperty({ description: 'Positive decimal string; up to six fractional digits before canonical rounding.', example: '180.25' })
@@ -31,6 +32,20 @@ export class WeightHistoryQuery {
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
   to?: string;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 50, description: 'Maximum entries per page.' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @ApiPropertyOptional({ type: String, format: 'date', example: '2026-01-01', description: 'Exclusive date cursor. Pass the previous page’s nextCursor to get older entries.' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  before?: string;
 }
 
 export class WeightEntryResponse {
@@ -51,4 +66,12 @@ export class WeightEntryResponse {
 
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt!: Date;
+}
+
+export class WeightHistoryPageResponse {
+  @ApiProperty({ type: [WeightEntryResponse] })
+  items!: WeightEntryResponse[];
+
+  @ApiProperty({ type: String, format: 'date', nullable: true, description: 'Exclusive date cursor for the next page, or null when there are no older entries.' })
+  nextCursor!: string | null;
 }

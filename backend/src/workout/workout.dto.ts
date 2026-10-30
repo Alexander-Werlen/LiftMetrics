@@ -92,6 +92,19 @@ export class WorkoutHistoryQuery {
   @IsOptional()
   @IsEnum(WeightUnit)
   unit?: WeightUnit;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 50, description: 'Maximum workouts per page.' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Exclusive cursor returned by the preceding page.' })
+  @IsOptional()
+  @IsUUID()
+  cursor?: string;
 }
 
 export class WorkoutExerciseCatalogResponse {
@@ -193,4 +206,12 @@ export class WorkoutResponse {
 
   @ApiProperty({ type: [WorkoutExerciseResponse] })
   exercises!: WorkoutExerciseResponse[];
+}
+
+export class WorkoutHistoryPageResponse {
+  @ApiProperty({ type: [WorkoutResponse] })
+  items!: WorkoutResponse[];
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, description: 'Cursor for the next page, or null when the history is exhausted.' })
+  nextCursor!: string | null;
 }

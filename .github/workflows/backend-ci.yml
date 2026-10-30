@@ -1,0 +1,44 @@
+name: Backend CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: liftmetrics
+          POSTGRES_USER: liftmetrics
+          POSTGRES_PASSWORD: liftmetrics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U liftmetrics -d liftmetrics"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql://liftmetrics:liftmetrics@localhost:5432/liftmetrics?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run prisma:validate
+      - run: npm run prisma:generate
+      - run: npm run lint:types
+      - run: npm run build
+      - run: npm run prisma:migrate:deploy
+      - run: npm run prisma:seed
+      - run: npm test
+      - run: npm run test:integration

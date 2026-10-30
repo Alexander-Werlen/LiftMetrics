@@ -4,11 +4,14 @@ import { Auth0AccessTokenGuard } from '../auth/auth0-access-token.guard';
 import { CurrentAccount } from '../auth/auth-principal.decorator';
 import { AccountContext } from '../auth/auth.types';
 import { LocalAccountGuard } from '../account/local-account.guard';
+import { ApiCommonProtectedResponses } from '../common/api-common-responses';
+import { ApiErrorResponseDto } from '../common/api-error.dto';
 import { BlueprintResponse, CreateBlueprintDto, UpdateBlueprintDto } from './blueprint.dto';
 import { BlueprintService } from './blueprint.service';
 
 @ApiTags('session blueprints')
 @ApiBearerAuth()
+@ApiCommonProtectedResponses()
 @UseGuards(Auth0AccessTokenGuard, LocalAccountGuard)
 @Controller('api/session-blueprints')
 export class BlueprintController {
@@ -17,7 +20,7 @@ export class BlueprintController {
   @Post()
   @ApiOperation({ summary: 'Create a reusable workout session blueprint' })
   @ApiCreatedResponse({ type: BlueprintResponse, description: 'Created blueprint with exercises in submitted order.' })
-  @ApiBadRequestResponse({ description: 'A selected exercise or prescription is invalid.' })
+  @ApiBadRequestResponse({ type: ApiErrorResponseDto, description: 'A selected exercise or prescription is invalid.' })
   create(@CurrentAccount() account: AccountContext, @Body() input: CreateBlueprintDto) {
     return this.blueprints.create(account, input);
   }
@@ -33,7 +36,7 @@ export class BlueprintController {
   @Get(':id')
   @ApiOperation({ summary: 'Read one blueprint, including its ordered exercise prescriptions' })
   @ApiOkResponse({ type: BlueprintResponse })
-  @ApiNotFoundResponse({ description: 'The blueprint does not exist for this user.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The blueprint does not exist for this user.' })
   get(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.blueprints.get(account, id);
   }
@@ -41,8 +44,8 @@ export class BlueprintController {
   @Put(':id')
   @ApiOperation({ summary: 'Replace a blueprint and its ordered exercise prescriptions' })
   @ApiOkResponse({ type: BlueprintResponse })
-  @ApiBadRequestResponse({ description: 'A selected exercise or prescription is invalid.' })
-  @ApiNotFoundResponse({ description: 'The active blueprint does not exist for this user.' })
+  @ApiBadRequestResponse({ type: ApiErrorResponseDto, description: 'A selected exercise or prescription is invalid.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The active blueprint does not exist for this user.' })
   update(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string, @Body() input: UpdateBlueprintDto) {
     return this.blueprints.update(account, id, input);
   }
@@ -51,7 +54,7 @@ export class BlueprintController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Archive a reusable blueprint while preserving references' })
   @ApiOkResponse({ type: BlueprintResponse })
-  @ApiNotFoundResponse({ description: 'The blueprint does not exist for this user.' })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto, description: 'The blueprint does not exist for this user.' })
   archive(@CurrentAccount() account: AccountContext, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.blueprints.archive(account, id);
   }

@@ -36,18 +36,26 @@ export class WeightService {
   async history(account: AccountContext, query: WeightHistoryQuery) {
     const from = query.from ? parseCalendarDate(query.from) : undefined;
     const to = query.to ? parseCalendarDate(query.to) : undefined;
+    const before = query.before ? parseCalendarDate(query.before) : undefined;
     if (from && to && from > to) throw new BadRequestException('The from date must be on or before the to date');
+    const limit = query.limit ?? 50;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new BadRequestException('The history limit must be between 1 and 100');
 
     const entries = await this.prisma.weightEntry.findMany({
       where: {
         userId: account.id,
-        ...(from || to ? { entryDate: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } : {}),
+        ...(from || to || before ? { entryDate: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}), ...(before ? { lt: before } : {}) } } : {}),
       },
       orderBy: { entryDate: 'desc' },
+      take: limit + 1,
       select: { id: true, entryDate: true, weightKg: true, createdAt: true, updatedAt: true },
     });
     const responseUnit = query.unit ?? account.preferredWeightUnit;
-    return entries.map((entry) => this.toResponse(entry, responseUnit));
+    const page = entries.slice(0, limit);
+    return {
+      items: page.map((entry) => this.toResponse(entry, responseUnit)),
+      nextCursor: entries.length > limit ? page[page.length - 1].entryDate.toISOString().slice(0, 10) : null,
+    };
   }
 
   private toResponse(entry: { id: string; entryDate: Date; weightKg: Prisma.Decimal; createdAt: Date; updatedAt: Date }, unit: WeightUnit) {

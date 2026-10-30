@@ -107,17 +107,40 @@ export class WorkoutService {
     const from = query.from ? parseCalendarDate(query.from) : undefined;
     const to = query.to ? parseCalendarDate(query.to) : undefined;
     if (from && to && from > to) throw new BadRequestException('The from date must be on or before the to date');
+    const limit = query.limit ?? 50;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new BadRequestException('The history limit must be between 1 and 100');
+    const baseWhere: Prisma.WorkoutSessionWhereInput = {
+      userId: account.id,
+      ...(query.status ? { status: query.status } : {}),
+      ...(from || to ? { workoutDate: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } : {}),
+    };
+    let where: Prisma.WorkoutSessionWhereInput = baseWhere;
+    if (query.cursor) {
+      const cursor = await this.prisma.workoutSession.findFirst({
+        where: { id: query.cursor, userId: account.id },
+        select: { id: true, workoutDate: true, startedAt: true },
+      });
+      if (!cursor) throw new BadRequestException('The history cursor is invalid for this account');
+      where = {
+        AND: [baseWhere, { OR: [
+          { workoutDate: { lt: cursor.workoutDate } },
+          { workoutDate: cursor.workoutDate, startedAt: { lt: cursor.startedAt } },
+          { workoutDate: cursor.workoutDate, startedAt: cursor.startedAt, id: { gt: cursor.id } },
+        ] }],
+      };
+    }
     const workouts = await this.prisma.workoutSession.findMany({
-      where: {
-        userId: account.id,
-        ...(query.status ? { status: query.status } : {}),
-        ...(from || to ? { workoutDate: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } : {}),
-      },
+      where,
       orderBy: [{ workoutDate: 'desc' }, { startedAt: 'desc' }, { id: 'asc' }],
+      take: limit + 1,
       include: includeWorkout,
     });
     const responseUnit = query.unit ?? account.preferredWeightUnit;
-    return workouts.map((workout) => this.toResponse(workout, responseUnit));
+    const page = workouts.slice(0, limit);
+    return {
+      items: page.map((workout) => this.toResponse(workout, responseUnit)),
+      nextCursor: workouts.length > limit ? page[page.length - 1].id : null,
+    };
   }
 
   async get(account: AccountContext, id: string, unit?: WeightUnit) {
