@@ -1,0 +1,6 @@
+.env
+.env.*.local
+backend/node_modules/
+backend/dist/
+backend/*.tsbuildinfo
+ops/postgres-data/
