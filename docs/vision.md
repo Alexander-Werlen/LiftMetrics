@@ -38,7 +38,7 @@ The backend is a first-class product component and the primary technical learnin
 
 Areas of interest include robust domain and data modeling, API design, authentication and authorization, user data isolation, security, observability, reliability, backups and recovery, automated testing, deployment, CI/CD, and operational documentation. The backend should remain independent of the current front end so other clients could be added later.
 
-The project should have meaningful depth in these areas without adding complexity arbitrarily. The initial technology direction is NestJS with TypeScript for the backend, React with TypeScript for the frontend, PostgreSQL with Prisma for persistence, and a Docker-based deployment behind a same-origin reverse proxy. Hosting, identity provider, operational targets, and implementation sequencing remain open for requirements and architecture work.
+The project should have meaningful depth in these areas without adding complexity arbitrarily. The initial technology direction is NestJS with TypeScript for the backend, React with TypeScript for the frontend, PostgreSQL with Prisma for persistence, and a Docker-based deployment behind a same-origin reverse proxy. Auth0 is selected for the initial identity provider. Hosting, operational targets, and implementation sequencing remain open for requirements and architecture work.
 
 ## Initial boundaries
 

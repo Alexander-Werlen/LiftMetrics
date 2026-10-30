@@ -13,6 +13,7 @@ This proposal follows [`vision.md`](vision.md), [`general_design.md`](general_de
 - Keep exercise measurement type fixed. Historical workout rows also retain a snapshot of the exercise name and measurement type as recorded when the workout was created.
 - Archive reusable items instead of deleting them when history or plans refer to them.
 - Persist decimal measurements without floating-point rounding. Store load and body weight in kilograms; convert for display according to user preference.
+- Public weight and load API values include an explicit `KG` or `LB` unit. Convert pounds using the exact factor `1 lb = 0.45359237 kg`, then round half up to the nearest `0.001 kg` for persistence. Write responses use the submitted unit. Read responses include their unit and use an explicitly requested unit or the user's preferred unit when none is requested.
 
 ## Entity relationship diagram
 
@@ -179,7 +180,7 @@ One corrected, current body-weight value per user and calendar day.
 | `weightKg` | Decimal(7,3) | Greater than zero; canonical kilograms, with 1 g storage precision |
 | `createdAt`, `updatedAt` | Timestamp | UTC; updates support correction |
 
-Unique constraint: `(userId, entryDate)`. Create-or-update behavior for that key supports correcting a prior entry. The entry date is the calendar date in the user's declared time zone. Since that time zone cannot change, later profile edits cannot move an entry across days.
+Unique constraint: `(userId, entryDate)`. Create-or-update behavior for that key supports correcting a prior entry. The entry date is the calendar date in the user's declared time zone. Since that time zone cannot change, later profile edits cannot move an entry across days. API create/correction requests include an explicit `unit` (`KG` or `LB`) beside the decimal value; the service converts to canonical kilograms before persistence.
 
 ### Exercise (shared catalog)
 
@@ -277,9 +278,9 @@ Recommended constraints and indexes:
 No product-level model decisions remain open. Before implementing the schema and account flows:
 
 - Configure separate Auth0 applications/API audiences for each deployment environment and keep tenant issuer, API audience, and client IDs in deployment configuration.
-- Decide the initial shared exercise catalog contents and maintain them as version-controlled seed data.
+- Use the proposed version-controlled exercise inventory in [`feature_docs/exercise_catalog_seed.md`](feature_docs/exercise_catalog_seed.md) as the initial catalog seed; keep additions and corrections explicit and version controlled.
 - Implement account deletion as a retryable cross-service workflow so local personal data and the corresponding Auth0 account are both deleted even if either side is temporarily unavailable.
-- Establish any legal or operational requirements for minimal audit records; those requirements must not retain workout, weight, or profile data after account deletion.
+- Establish any legal or operational requirements for audit records before adding retained audit data. Such records must not retain workout, weight, or profile data after account deletion.
 
 ## Prisma implementation notes
 

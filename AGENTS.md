@@ -18,7 +18,7 @@ For frontend visual exploration, also consult `docs/Visual Design Reference/visu
 - **App-like access:** Build toward an installable Progressive Web App. The initial release is online-only.
 - **Architecture:** Start with a modular monolith. Keep clear boundaries between domain areas without introducing microservices prematurely.
 
-Use these choices consistently. Do not replace them with alternatives or add major infrastructure dependencies without discussing the tradeoff with the user first. Details that remain open—such as hosting, identity provider, and deployment targets—should stay open until requirements work decides them.
+Use these choices consistently. Do not replace them with alternatives or add major infrastructure dependencies without discussing the tradeoff with the user first. Auth0 is selected as the initial identity provider; keep its issuer, audience, and client configuration in deployment configuration. Hosting and deployment targets remain open until requirements work decides them.
 
 ## Product and domain constraints
 

@@ -18,7 +18,8 @@ This document captures the product behavior and domain concepts established so f
 - Put a reverse proxy in front of the frontend and backend and serve both through one origin. Forward `/api` and `/api/*` requests to the backend; serve all other paths from the frontend, including its client-side route fallback.
 - The proxy forwards API requests internally; it does not redirect them. The browser uses same-origin paths such as `/api/weight-entries`, avoiding production CORS configuration for the web client.
 - Keep the backend and database on the internal container network rather than exposing them directly to the public internet. The reverse proxy is the public entry point.
-- The specific reverse proxy, hosting platform, and identity provider remain undecided.
+- Auth0 is selected for the initial identity provider; configure its issuer, API audience, and client IDs per deployment environment.
+- The specific reverse proxy and hosting platform remain undecided.
 
 ## Main screen
 
