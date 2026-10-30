@@ -4,7 +4,7 @@ import { Prisma, WeightUnit } from '@prisma/client';
 import { AccountContext } from '../auth/auth.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { WeightService } from './weight.service';
-import { formatWeightRead, parseCalendarDate, toStoredMilliKilograms } from './weight-units';
+import { formatWeightRead, parseCalendarDate, toStoredLoadMilliKilograms, toStoredMilliKilograms } from './weight-units';
 
 const account: AccountContext = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -27,6 +27,12 @@ test('rejects non-positive weights, values rounded to zero, and values outside d
   assert.throws(() => toStoredMilliKilograms('10000', WeightUnit.KG), /supported maximum/);
   assert.throws(() => toStoredMilliKilograms('-1', WeightUnit.KG), /positive decimal/);
   assert.throws(() => toStoredMilliKilograms('1.0000001', WeightUnit.KG), /positive decimal/);
+});
+
+test('load conversion accepts zero and uses the same exact kilogram rounding', () => {
+  assert.equal(toStoredLoadMilliKilograms('0', WeightUnit.KG), 0n);
+  assert.equal(toStoredLoadMilliKilograms('1', WeightUnit.LB), 454n);
+  assert.throws(() => toStoredLoadMilliKilograms('-1', WeightUnit.KG), /positive decimal/);
 });
 
 test('accepts only real YYYY-MM-DD calendar dates', () => {

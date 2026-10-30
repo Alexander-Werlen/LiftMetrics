@@ -175,6 +175,8 @@ model WorkoutExercise {
   measurementTypeSnapshot ExerciseMeasurementType
   position                Int
   plannedSetCountSnapshot Int?
+  targetRepMinSnapshot    Int?
+  targetRepMaxSnapshot    Int?
   workoutSession          WorkoutSession          @relation(fields: [userId, workoutSessionId], references: [userId, id], onDelete: Cascade)
   exercise                Exercise                @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   sets                    WorkoutSet[]

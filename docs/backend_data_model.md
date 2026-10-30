@@ -119,6 +119,8 @@ erDiagram
         enum measurementTypeSnapshot
         int position
         int plannedSetCountSnapshot
+        int targetRepMinSnapshot
+        int targetRepMaxSnapshot
     }
     WORKOUT_SET {
         uuid id PK
@@ -241,6 +243,7 @@ These entities describe what the user actually did. Starting a recommendation co
 | `exerciseNameSnapshot`, `measurementTypeSnapshot` | Captured at start/add time. Measurement snapshot must match the referenced exercise at that time |
 | `position` | Unique ordering within the workout |
 | `plannedSetCountSnapshot` | Optional starting recommendation retained for comparison; actual sets are rows below |
+| `targetRepMinSnapshot`, `targetRepMaxSnapshot` | Optional repetition-range values copied from the source blueprint so later edits do not change the workout snapshot |
 | `WorkoutSet.position` | Unique ordering within the workout exercise |
 | `repetitions`, `weightKg` | Required for `REPS_AND_WEIGHT`; repetitions > 0 and weight >= 0 (zero is valid) |
 | `durationSeconds` | Required for `TIME`; positive integer |

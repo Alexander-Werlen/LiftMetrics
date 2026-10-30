@@ -19,15 +19,26 @@ function parseMicroUnits(value: string): bigint {
 
 export function toStoredMilliKilograms(value: string, unit: WeightUnit): bigint {
   const microUnits = parseMicroUnits(value);
-  const milliKilograms = unit === WeightUnit.KG
-    ? roundHalfUp(microUnits, 1_000n)
-    : roundHalfUp(microUnits * LB_TO_KG_NUMERATOR, 100_000_000_000n);
+  const milliKilograms = convertToMilliKilograms(microUnits, unit);
 
   if (milliKilograms <= 0n) throw new BadRequestException('Weight must be greater than zero after conversion');
   if (milliKilograms > MAX_STORED_MILLIKILOGRAMS) {
     throw new BadRequestException('Weight exceeds the supported maximum');
   }
   return milliKilograms;
+}
+
+export function toStoredLoadMilliKilograms(value: string, unit: WeightUnit): bigint {
+  const milliKilograms = convertToMilliKilograms(parseMicroUnits(value), unit);
+  if (milliKilograms < 0n) throw new BadRequestException('Load cannot be negative');
+  if (milliKilograms > MAX_STORED_MILLIKILOGRAMS) throw new BadRequestException('Load exceeds the supported maximum');
+  return milliKilograms;
+}
+
+function convertToMilliKilograms(microUnits: bigint, unit: WeightUnit): bigint {
+  return unit === WeightUnit.KG
+    ? roundHalfUp(microUnits, 1_000n)
+    : roundHalfUp(microUnits * LB_TO_KG_NUMERATOR, 100_000_000_000n);
 }
 
 export function formatMilliUnits(value: bigint): string {
