@@ -45,6 +45,17 @@ services:
       db: {condition: service_healthy}
     networks: [backend]
     profiles: [tools]
+  integration-test:
+    build:
+      context: ./backend
+      target: build
+    command: ["npm", "run", "test:integration"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [backend]
+    profiles: [tools]
   frontend:
     image: nginx:1.27-alpine
     volumes:
