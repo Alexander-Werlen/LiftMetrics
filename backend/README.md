@@ -18,6 +18,8 @@ Load the shared exercise catalog after applying migrations with `cd backend && n
 
 Weight entries use `PUT /api/weight-entries/YYYY-MM-DD` with a decimal-string `weight` and explicit `unit` (`KG` or `LB`); saving the same date corrects its value. The date is a calendar day in the account's fixed time zone. Reads use `GET /api/weight-entries/YYYY-MM-DD` or `GET /api/weight-entries`, optionally filtered by inclusive `from`/`to` dates. Reads default to the account's preferred unit; values are returned to 0.001 precision in that unit. Writes echo the submitted unit and value. Pounds are converted using `1 lb = 0.45359237 kg`, then rounded half up to 0.001 kg for storage. Entry weight inputs accept up to six fractional digits.
 
+Reusable workouts use `POST`, `GET`, `PUT /api/session-blueprints` and `POST /api/session-blueprints/:id/archive`. A submitted exercise array defines zero-based order; blueprint updates replace the full prescription atomically. Rep targets require both positive bounds, must be ordered, and apply only to repetitions-and-weight exercises. Archived blueprints remain readable and can be included in lists with `includeArchived=true`; archived exercises cannot be selected when creating or editing a blueprint.
+
 ## Configuration
 
 `DATABASE_URL` is required and validated at startup. `PORT`, `NODE_ENV`, and the deletion-worker interval have local defaults. Compose also requires `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`; provide them in an untracked root `.env`. Do not commit real credentials.
