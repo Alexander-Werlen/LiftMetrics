@@ -20,6 +20,8 @@ Weight entries use `PUT /api/weight-entries/YYYY-MM-DD` with a decimal-string `w
 
 Reusable workouts use `POST`, `GET`, `PUT /api/session-blueprints` and `POST /api/session-blueprints/:id/archive`. A submitted exercise array defines zero-based order; blueprint updates replace the full prescription atomically. Rep targets require both positive bounds, must be ordered, and apply only to repetitions-and-weight exercises. Archived blueprints remain readable and can be included in lists with `includeArchived=true`; archived exercises cannot be selected when creating or editing a blueprint.
 
+Weekly schedules use `POST /api/weekly-plans`, `GET /api/weekly-plans` and `GET /api/weekly-plans/:id`, `PUT /api/weekly-plans/:id`, and `POST /api/weekly-plans/:id/activate` or `/deactivate`. Assignments use ISO weekdays (Monday=1, Sunday=7); their order in the submitted array determines the session order within each weekday. Activating a plan deactivates the user's previous plan. `GET /api/weekly-plans/recommendation/today` resolves the weekday in the account's time zone and returns an empty `sessions` array when no plan or session is scheduled. Existing assignments retain archived blueprints, while newly submitted assignments must reference active blueprints.
+
 ## Configuration
 
 `DATABASE_URL` is required and validated at startup. `PORT`, `NODE_ENV`, and the deletion-worker interval have local defaults. Compose also requires `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`; provide them in an untracked root `.env`. Do not commit real credentials.
