@@ -7,4 +7,6 @@ frontend/node_modules/
 frontend/build/
 frontend/.react-router/
 frontend/*.tsbuildinfo
+frontend/.env.local
+frontend/.env.*.local
 ops/postgres-data/

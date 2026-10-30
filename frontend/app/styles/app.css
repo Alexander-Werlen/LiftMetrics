@@ -34,6 +34,17 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent-light); 
 .nav-link.active::after { position: absolute; right: 16px; bottom: 0; left: 16px; height: 2px; border-radius: 2px 2px 0 0; background: var(--accent); content: ''; }
 .profile-placeholder { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
 .profile-dot { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid #ffffff16; border-radius: 50%; background: var(--surface-raised); color: var(--accent-light); font-size: 11px; font-weight: 700; }
+.account-menu { position: relative; }
+.account-menu-trigger { display: flex; align-items: center; gap: 9px; padding: 6px 0 6px 8px; color: var(--muted); cursor: pointer; list-style: none; font-size: 12px; }
+.account-menu-trigger::-webkit-details-marker { display: none; }
+.account-menu-trigger:hover, .account-menu[open] .account-menu-trigger { color: var(--ink); }
+.account-menu-panel { position: absolute; z-index: 8; top: calc(100% + 11px); right: 0; width: min(310px, calc(100vw - 30px)); padding: 18px; border: 1px solid #ffffff17; border-radius: 15px; background: #20292e; box-shadow: 0 18px 50px #0008; }
+.account-time-zone { margin: 13px 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.account-time-zone strong { color: var(--ink); font-size: 12px; font-weight: 600; }
+.account-preference-form { display: grid; gap: 10px; }
+.account-menu-message { margin: 0; color: var(--green); font-size: 11px; line-height: 1.45; }
+.sign-out-button { width: 100%; min-height: 38px; margin-top: 13px; border: 1px solid #ffffff18; border-radius: 9px; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 700; }
+.sign-out-button:hover { border-color: var(--line); color: var(--ink); }
 .main-content { width: 100%; }
 .page-shell { width: min(100% - 48px, 760px); margin: 0 auto; padding: 39px 0 64px; }
 .today-page { max-width: 690px; }
@@ -72,6 +83,23 @@ h2 { margin: 6px 0 0; font: 23px/1.16 'DM Serif Display', Georgia, serif; letter
 .link-button { width: max-content; }
 .mobile-nav { display: none; }
 .initial-load { min-height: 100vh; display: grid; place-items: center; color: var(--muted); font-size: 14px; }
+.auth-page { min-height: calc(100vh - 75px); display: grid; place-items: center; padding: 38px 16px; }
+.auth-panel { width: min(100%, 440px); padding: 27px; }
+.auth-panel h1 { margin: 10px 0 0; font-size: 34px; }
+.auth-brand-mark { width: 42px; height: 42px; margin-bottom: 23px; border-radius: 13px; font-size: 27px; }
+.auth-form { display: grid; gap: 19px; margin-top: 24px; }
+.form-field { display: grid; gap: 7px; color: var(--ink); font-size: 12px; font-weight: 600; }
+.form-field input, .form-field select { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: #151b1f; color: var(--ink); font: inherit; font-size: 13px; }
+.form-field input::placeholder { color: var(--faint); }
+.form-field small { color: var(--muted); font-size: 10px; font-weight: 400; line-height: 1.45; }
+.form-field input:focus-visible, .form-field select:focus-visible { outline: 3px solid var(--accent-light); outline-offset: 2px; }
+.auth-submit { width: 100%; margin-top: 7px; }
+.auth-status { color: var(--muted); font-size: 14px; }
+.form-error { margin: 0; padding: 11px 12px; border: 1px solid #e3815d55; border-radius: 10px; background: #e3815d12; color: #ffc0a5; font-size: 12px; line-height: 1.5; }
+.auth-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 21px; }
+.secondary-button { min-height: 39px; padding: 0 13px; border: 1px solid #ffffff1c; border-radius: 9px; background: #ffffff08; color: var(--ink); cursor: pointer; font-size: 11px; font-weight: 700; }
+.secondary-button:hover:not(:disabled) { border-color: #ffffff33; background: #ffffff0d; }
+.secondary-button:disabled { opacity: .45; cursor: not-allowed; }
 
 @media (min-width: 1000px) {
   .today-page { padding-top: 52px; }
@@ -86,6 +114,8 @@ h2 { margin: 6px 0 0; font: 23px/1.16 'DM Serif Display', Georgia, serif; letter
   .brand-mark { width: 29px; height: 29px; }
   .primary-nav { display: none; }
   .profile-label { display: none; }
+  .account-menu-trigger { padding: 5px 0 5px 6px; }
+  .account-menu-panel { top: calc(100% + 8px); }
   .page-shell { width: min(100% - 32px, 470px); padding: 28px 0 28px; }
   .page-heading { margin-bottom: 17px; }
   h1 { font-size: 37px; }
@@ -96,6 +126,9 @@ h2 { margin: 6px 0 0; font: 23px/1.16 'DM Serif Display', Georgia, serif; letter
   .secondary-page { padding-top: 27px; }
   .secondary-page .page-heading { margin-bottom: 19px; }
   .secondary-card { padding: 20px 18px; }
+  .auth-page { min-height: calc(100vh - 61px - 68px); padding: 22px 16px; }
+  .auth-panel { padding: 22px 19px; }
+  .auth-panel h1 { font-size: 30px; }
   .mobile-nav { position: fixed; z-index: 5; right: 0; bottom: 0; left: 0; height: calc(68px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 1fr); padding: 7px 17px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid #ffffff12; background: #171d21f2; backdrop-filter: blur(16px); }
   .mobile-nav-link { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 12px; color: var(--faint); text-decoration: none; font-size: 10px; font-weight: 600; }
   .mobile-nav-link.active { color: var(--accent-light); }

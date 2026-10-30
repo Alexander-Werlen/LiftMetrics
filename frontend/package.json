@@ -9,6 +9,7 @@
     "typecheck": "react-router typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.30.0",
     "@react-router/node": "^8.5.1",
     "isbot": "^5.1.31",
     "react": "^19.3.1",
