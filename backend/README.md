@@ -14,6 +14,8 @@ The database and API share a Docker network marked internal. Only the reverse pr
 
 After starting Compose, apply committed migrations with `docker compose run --rm migrate`. This one-off service uses the build image (which contains the Prisma CLI and schema files) and shares only the internal database network. The running API image stays lean and does not include migration tooling. Run the focused backend checks with `cd backend && npm test`.
 
+Load the shared exercise catalog after applying migrations with `cd backend && npm run prisma:seed`. The seed is safe to rerun: it matches normalized names, preserves archived rows, and fails if an existing exercise's measurement type differs from the version-controlled catalog. The catalog is read-only through the API: `GET /api/exercises` browses active exercises, and `GET /api/exercises/:id` also returns archived exercises so existing references can still be displayed. Both endpoints require a valid bearer access token.
+
 ## Configuration
 
 `DATABASE_URL` is required and validated at startup. `PORT`, `NODE_ENV`, and the deletion-worker interval have local defaults. Compose also requires `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`; provide them in an untracked root `.env`. Do not commit real credentials.
@@ -22,6 +24,6 @@ Account authentication requires `AUTH0_ISSUER`, `AUTH0_API_AUDIENCE`, and a comm
 
 ## Database and API notes
 
-Prisma's schema and migration contain the initial account tables; later domain tables are added in the schema step. Generate its client with `npm run prisma:generate`. Health reports process liveness independently from readiness so an unavailable database does not make the liveness endpoint fail. Every response gets a request ID; structured request and server-error logs include that ID and omit request bodies and query values.
+Prisma's schema and migrations define account identity, weight history, exercises, workout blueprints, weekly plans, and workout history. Generate its client with `npm run prisma:generate`. Health reports process liveness independently from readiness so an unavailable database does not make the liveness endpoint fail. Every response gets a request ID; structured request and server-error logs include that ID and omit request bodies and query values.
 
 The account endpoints are `POST`, `GET`, `PATCH`, and `DELETE /api/account`. The first `POST` provisions a local account for the validated Auth0 `(iss, sub)` identity and requires the user's IANA time zone and preferred weight unit. Repeated provisioning for that identity returns the existing account. The time zone cannot be changed later. `DELETE` removes local account rows in a database transaction and creates a minimal outbox task containing only the Auth0 subject; a worker calls Auth0 and retries failures with capped exponential backoff. A 404 from Auth0 is treated as already deleted, so a crash after remote deletion is safe to retry.

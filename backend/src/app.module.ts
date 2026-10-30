@@ -5,6 +5,7 @@ import { RequestLoggingMiddleware } from './common/request-logging.middleware';
 import { AccountModule } from './account/account.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ExerciseModule } from './exercise/exercise.module';
 
 const environmentSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
@@ -37,6 +38,7 @@ const environmentSchema = Joi.object({
     PrismaModule,
     HealthModule,
     AccountModule,
+    ExerciseModule,
   ],
 })
 export class AppModule implements NestModule {
