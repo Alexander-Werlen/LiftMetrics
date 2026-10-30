@@ -6,6 +6,8 @@ LiftMetrics is a multi-user application for tracking body weight and strength tr
 
 Before changing product behavior, consult `docs/vision.md` and `docs/general_design.md`. Those documents describe the current product direction and domain decisions. Do not invent requirements where they are still open; call out meaningful gaps when they affect implementation.
 
+For frontend visual exploration, also consult `docs/Visual Design Reference/visual_design_reference.md` and its accompanying concept image. Treat them as records of visual preferences, not as a locked layout or design system.
+
 ## Technology decisions
 
 - **Backend:** NestJS with TypeScript.
