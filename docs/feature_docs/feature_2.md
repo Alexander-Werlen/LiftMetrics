@@ -229,7 +229,11 @@ Connect start-from-recommendation and (if included in the reviewed design) ad ho
 
 Connect `GET /api/weight-entries` pagination and date correction, plus `GET /api/workout-sessions` and `GET /api/workout-sessions/:id`. Build History with the weight trend/list, clear date-specific correction, an **All workouts** path, paginated workout records, and a detail view showing date, completion state, exercise order, measurement type, and sets. Keep charts and detailed records off Today.
 
-**Checkpoint:** Users can page through their own dated weight records, correct an earlier date, and open completed workout details. Empty history, loading, invalid edits, server errors, and end-of-list are handled. Pagination uses the returned cursors and does not skip or duplicate records.
+**Checkpoint criteria:** Users can page through their own dated weight records, correct an earlier date, and open completed workout details. Empty history, loading, invalid edits, server errors, and end-of-list are handled. Pagination uses the returned cursors and does not skip or duplicate records.
+
+**Implementation delivered:** History reads the authenticated account's complete dated weight-entry list in the preferred unit and presents five records per page using the API's `before` cursor. Completed workouts also show five records per page using the session cursor. The chart range can switch among 30 days, 90 days (default), 6 months, and 1 year. It retrieves all cursor pages in that selected inclusive window ending on the account-local current date, then plots each entry by its actual calendar date so gaps between measurements remain proportional. The chart uses a responsive SVG viewBox that preserves label proportions, shows multiple dates between the first and last measurements, and labels weight values on the vertical axis. Each dated record has a date-labeled inline correction form; field validation and API failures appear beside the relevant action. Weight and workout lists show loading, empty, retry, pagination, and end-of-list states. **All workouts** opens the cursor-paginated completed-session list; each item opens a detail route that reads the session by ID and displays its date, status, exercise order, fixed measurement type, and recorded sets. No backend or OpenAPI contract change was needed.
+
+**Checkpoint — complete with verification note:** Frontend typecheck, production build, and Compose frontend image build pass. The signed-in browser walkthrough through Compose verified the populated weight trend with irregularly spaced sample entries, 90-day and 30-day ranges, readable DD/MM axis labels, reduced chart padding, and five-entry pagination; the completed workout list and workout detail content were also reviewed. The per-entry correction form and API error/invalid-edit states are implemented, but submitting a correction was not manually exercised in the browser. A hard refresh of a protected detail URL returned to the sign-in screen because the current Auth0 session is not restored after reload in this browser; record this for the step 8 route-refresh review. React Router also reports that the host Node 22.14.0 is below its stated requirement (>22.22.0); the configured Node 22.22 container build succeeds.
 
 ### 7. Deliver Plan and reusable workout management
 
@@ -246,7 +250,7 @@ Review all implemented routes at phone and desktop sizes, keyboard-only operatio
 ## Open design decisions
 
 - Saved-workout editing: refine how users search/select exercises and enter optional targets during the Plan implementation slice; preserve the API's fixed measurement types and validation.
-- History range controls: validate the 90-day default during usability review and decide whether additional range shortcuts are needed for the first release.
+- History range controls: validate the 90-day default and the 30-day, 6-month, and 1-year shortcuts during usability review.
 - Failure and edge states: refine recovery copy and interaction details for plan activation/update failures, stale recommendations, and a saved-workout edit while a workout is in progress. The API snapshots started workouts, so editing a blueprint does not alter the active workout.
 
 ## Completion criteria
