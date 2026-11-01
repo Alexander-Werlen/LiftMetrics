@@ -38,8 +38,8 @@ Do not fill the main screen with weight charts, weekly overviews, recent-history
 
 ## Workout plans and recommendations
 
-- A user can create reusable workout sessions, also called session blueprints or routines.
-- A weekly plan assigns sessions to days of the week and can include multiple sessions.
+- A user can create weekly plans, each with one workout blueprint assigned to each training day. A weekday can also be explicitly left as a rest day.
+- Workouts are defined as part of the plan's day-by-day creation flow. The product does not need a shared workout library or multiple workouts on one day.
 - Each session contains an ordered list of exercises and planned set counts. Repetition-and-weight exercises can have a target repetition range.
 - On a day with a scheduled session, recommend that session from the main screen. The user can start it from there.
 - A recommendation is a starting point, not a mandatory script. During a workout, the user can add or remove exercises, change their order, and adjust the number of sets and the recorded repetitions, weights, or time.
