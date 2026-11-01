@@ -7,6 +7,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
   useNavigate,
 } from 'react-router';
 import type { LinksFunction } from 'react-router';
@@ -77,6 +78,11 @@ export default function App() {
 }
 
 function AuthenticatedAppShell() {
+  const location = useLocation();
+  useEffect(() => {
+    document.getElementById('main-content')?.focus();
+  }, [location.pathname]);
+
   return (
     <div className="app-frame">
       <a className="skip-link" href="#main-content">Skip to content</a>
@@ -92,7 +98,7 @@ function AuthenticatedAppShell() {
         </nav>
         <AccountMenu />
       </header>
-      <main id="main-content" className="main-content"><Outlet /></main>
+      <Outlet />
       <nav className="mobile-nav" aria-label="Main navigation">
         <NavLink to="/" end className={({ isActive }) => isActive ? 'mobile-nav-link active' : 'mobile-nav-link'}>
           <span className="nav-symbol" aria-hidden="true">⌂</span><span>Today</span>

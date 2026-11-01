@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 import type { MetaFunction } from 'react-router';
 import { errorMessage } from '../api/api-client';
@@ -254,7 +254,22 @@ export default function PlanRoute() {
     : [];
   const currentDay = days[step];
 
-  return <main className="page-shell secondary-page plan-page">
+  function handleDayChoiceKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    const keys = ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown', 'Home', 'End'];
+    if (!keys.includes(event.key)) return;
+    event.preventDefault();
+    const nextChoice = event.key === 'Home' ? 0
+      : event.key === 'End' ? 1
+        : event.currentTarget.dataset.choice === 'workout' ? 1 : 0;
+    const choice = nextChoice === 0 ? 'workout' : 'rest';
+    setShowDayChoices(true);
+    updateDay(step, choice === 'workout' ? { choice } : { choice, blueprintId: undefined });
+    const group = event.currentTarget.parentElement;
+    const nextButton = group?.querySelector<HTMLButtonElement>(`[data-choice="${choice}"]`);
+    nextButton?.focus();
+  }
+
+  return <main id="main-content" tabIndex={-1} className="page-shell secondary-page plan-page">
     {!wizard && <div className="page-heading"><div className="eyebrow">TRAINING</div><h1>Plan</h1></div>}
     {loadError && <div className="plan-load-error form-error" role="alert"><span>{loadError}</span><button className="text-button" type="button" onClick={() => void refresh()}>Retry</button></div>}
     {message && <p className="plan-notice" role="status">{message}</p>}
@@ -266,8 +281,8 @@ export default function PlanRoute() {
           <div className="wizard-day-heading"><h2 id="wizard-day-title">{currentDay.name}</h2>
           {draftDays[step].choice !== 'unset' && !showDayChoices && <div className="day-choice-summary"><strong>{draftDays[step].choice === 'workout' ? 'Workout' : 'Rest day'}</strong><button className="text-button" type="button" onClick={() => setShowDayChoices(true)}>Change</button></div>}</div>
           {(draftDays[step].choice === 'unset' || showDayChoices) && <div className="day-choice-list" role="radiogroup" aria-label={`Schedule for ${currentDay.name}`}>
-            <button type="button" role="radio" aria-checked={draftDays[step].choice === 'workout'} className={`day-choice${draftDays[step].choice === 'workout' ? ' selected' : ''}`} onClick={() => { updateDay(step, { choice: 'workout' }); setShowDayChoices(false); }}><span className="choice-dot" /><strong>Workout</strong></button>
-            <button type="button" role="radio" aria-checked={draftDays[step].choice === 'rest'} className={`day-choice${draftDays[step].choice === 'rest' ? ' selected' : ''}`} onClick={() => { updateDay(step, { choice: 'rest', blueprintId: undefined }); setShowDayChoices(false); }}><span className="choice-dot" /><strong>Rest day</strong></button>
+            <button type="button" role="radio" data-choice="workout" aria-checked={draftDays[step].choice === 'workout'} tabIndex={draftDays[step].choice === 'rest' ? -1 : 0} className={`day-choice${draftDays[step].choice === 'workout' ? ' selected' : ''}`} onKeyDown={handleDayChoiceKeyDown} onClick={() => { updateDay(step, { choice: 'workout' }); setShowDayChoices(false); }}><span className="choice-dot" /><strong>Workout</strong></button>
+            <button type="button" role="radio" data-choice="rest" aria-checked={draftDays[step].choice === 'rest'} tabIndex={draftDays[step].choice === 'rest' ? 0 : -1} className={`day-choice${draftDays[step].choice === 'rest' ? ' selected' : ''}`} onKeyDown={handleDayChoiceKeyDown} onClick={() => { updateDay(step, { choice: 'rest', blueprintId: undefined }); setShowDayChoices(false); }}><span className="choice-dot" /><strong>Rest day</strong></button>
           </div>}
           {draftDays[step].choice === 'workout' && <div className="day-workout-editor">
             <label className="form-field" htmlFor="day-workout-name"><span>Workout name</span><input id="day-workout-name" value={draftDays[step].name} onChange={(event) => updateDay(step, { name: event.currentTarget.value })} maxLength={120} required placeholder="e.g. Upper body" /></label>
@@ -279,7 +294,7 @@ export default function PlanRoute() {
                   : <button className="target-add" type="button" onClick={() => updateExercise(step, item.key, { showTarget: true })}>＋ Add rep range</button>)}
               </div>
             </li>)}</ol>}
-            <div className="wizard-add-section"><strong>Add an exercise</strong><div className="wizard-add-exercise"><label className="visually-hidden" htmlFor="exercise-search">Search exercises</label><input id="exercise-search" type="search" role="combobox" aria-autocomplete="list" aria-expanded={exerciseSuggestions.length > 0} aria-controls={exerciseSuggestions.length > 0 ? 'exercise-suggestions' : undefined} aria-activedescendant={exerciseSuggestions[activeExerciseIndex] ? `exercise-suggestion-${activeExerciseIndex}` : undefined} placeholder="Search exercises by name" value={exerciseQuery} onChange={(event) => { setExerciseQuery(event.currentTarget.value); setActiveExerciseIndex(-1); }} onKeyDown={(event) => {
+            <div className="wizard-add-section"><strong>Add an exercise</strong><div className="wizard-add-exercise"><label className="visually-hidden" htmlFor="exercise-search">Search exercises</label><input id="exercise-search" type="search" role="combobox" aria-haspopup="listbox" aria-autocomplete="list" aria-expanded={exerciseSuggestions.length > 0} aria-controls={exerciseSuggestions.length > 0 ? 'exercise-suggestions' : undefined} aria-activedescendant={exerciseSuggestions[activeExerciseIndex] ? `exercise-suggestion-${activeExerciseIndex}` : undefined} placeholder="Search exercises by name" value={exerciseQuery} onChange={(event) => { setExerciseQuery(event.currentTarget.value); setActiveExerciseIndex(-1); }} onKeyDown={(event) => {
               if (event.key === 'ArrowDown' && exerciseSuggestions.length) { event.preventDefault(); setActiveExerciseIndex((current) => current < 0 ? 0 : Math.min(current + 1, exerciseSuggestions.length - 1)); }
               if (event.key === 'ArrowUp' && exerciseSuggestions.length) { event.preventDefault(); setActiveExerciseIndex((current) => Math.max(current - 1, 0)); }
               if (event.key === 'Enter' && exerciseSuggestions[Math.max(activeExerciseIndex, 0)]) { event.preventDefault(); addExercise(step, exerciseSuggestions[Math.max(activeExerciseIndex, 0)]); }

@@ -9,7 +9,7 @@
   --line: #344047;
   --ink: #f1f0eb;
   --muted: #a0adb1;
-  --faint: #718087;
+  --faint: #909da2;
   --accent: #e3815d;
   --accent-light: #f2a17e;
   --green: #a1c69f;
@@ -21,6 +21,7 @@ body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradie
 button, a { font: inherit; }
 a { color: inherit; }
 button:focus-visible, a:focus-visible { outline: 3px solid var(--accent-light); outline-offset: 3px; }
+main:focus { outline: none; }
 
 .app-frame { min-height: 100vh; padding-bottom: 88px; }
 .skip-link { position: fixed; z-index: 10; top: 8px; left: 8px; padding: 10px 14px; border-radius: 10px; background: var(--ink); color: var(--page); transform: translateY(-150%); }
@@ -71,7 +72,7 @@ h2 { margin: 6px 0 0; font: 23px/1.16 'DM Serif Display', Georgia, serif; letter
 .workout-card { padding-bottom: 19px; }
 .empty-workout { min-height: 68px; display: flex; align-items: center; gap: 12px; margin: 16px 0 8px; padding: 12px 14px; border: 1px dashed #75848b45; border-radius: 12px; color: #a8b2b4; font-size: 12px; }
 .empty-workout-mark { color: var(--green); font-size: 22px; }
-.text-link { display: inline-flex; gap: 6px; align-items: center; margin-top: 9px; color: var(--accent-light); text-decoration: none; font-size: 12px; font-weight: 700; }
+.text-link { min-height: 32px; display: inline-flex; gap: 6px; align-items: center; margin-top: 9px; color: var(--accent-light); text-decoration: none; font-size: 12px; font-weight: 700; }
 .text-link:hover { color: #ffc1a4; }
 .secondary-page { max-width: 760px; }
 .secondary-page .page-heading { margin-bottom: 24px; }
@@ -234,7 +235,7 @@ h2 { margin: 6px 0 0; font: 23px/1.16 'DM Serif Display', Georgia, serif; letter
 .history-empty { min-height: 86px; display: grid; place-items: center; margin-top: 17px; padding: 16px; border: 1px dashed #75848b45; border-radius: 12px; color: var(--muted); font-size: 12px; line-height: 1.5; text-align: center; }
 .compact-empty { min-height: 60px; }
 .history-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 17px; }
-.text-button { flex: 0 0 auto; padding: 4px; border: 0; background: none; color: var(--accent-light); cursor: pointer; font-size: 11px; font-weight: 750; }
+.text-button { min-height: 28px; flex: 0 0 auto; padding: 4px; border: 0; background: none; color: var(--accent-light); cursor: pointer; font-size: 11px; font-weight: 750; }
 .history-list-heading { align-items: center; }
 .weight-entry-list { display: grid; margin-top: 16px; }
 .weight-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 14px; min-height: 68px; border-top: 1px solid #ffffff0d; }
@@ -340,7 +341,7 @@ h2 { margin: 6px 0 0; font: 23px/1.16 'DM Serif Display', Georgia, serif; letter
 .schedule-note { max-width: 360px; margin: 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .schedule-footer .primary-button { flex: 0 0 auto; min-height: 43px; }
 .plan-today-link { margin: 14px 0 0; color: var(--muted); font-size: 10px; }
-.plan-today-link a { margin-left: 4px; color: var(--accent-light); font-weight: 700; text-decoration: none; }
+.plan-today-link a { min-height: 24px; display: inline-flex; align-items: center; margin-left: 4px; color: var(--accent-light); font-weight: 700; text-decoration: none; }
 .plan-load-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 13px; }
 .plan-notice { margin: 0 0 13px; padding: 11px 13px; border: 1px solid #a1c69f35; border-radius: 10px; background: #a1c69f0c; color: var(--green); font-size: 11px; line-height: 1.5; }
 .routine-library .plan-card-heading { align-items: center; }
@@ -607,7 +608,7 @@ h2 { margin: 6px 0 0; font: 23px/1.16 'DM Serif Display', Georgia, serif; letter
 .plan-overview-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
 .plan-overview-actions > button { min-height: 38px; }
 .plan-today-link { margin: 13px 2px; color: var(--muted); font-size: 10px; }
-.plan-today-link a { margin-left: 4px; color: var(--accent-light); font-weight: 700; text-decoration: none; }
+  .plan-today-link a { min-height: 24px; display: inline-flex; align-items: center; margin-left: 4px; color: var(--accent-light); font-weight: 700; text-decoration: none; }
 .plan-today-link a:hover { text-decoration: underline; }
 
 @media (max-width: 600px) {

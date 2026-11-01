@@ -296,9 +296,9 @@ export default function WorkoutRoute() {
     }
   }
 
-  if (loading) return <main className="workout-route"><div className="workout-sheet"><p className="inline-status" role="status">Loading your workout…</p></div></main>;
+  if (loading) return <main id="main-content" tabIndex={-1} className="workout-route"><div className="workout-sheet"><p className="inline-status" role="status">Loading your workout…</p></div></main>;
   if (error && !workout) return (
-    <main className="workout-route">
+    <main id="main-content" tabIndex={-1} className="workout-route">
       <section className="workout-sheet workout-error-panel"><p className="section-kicker">WORKOUT</p><h1>Workout unavailable</h1><p className="form-error" role="alert">{error}</p><Link className="secondary-button" to="/">Return to Today</Link></section>
     </main>
   );
@@ -306,7 +306,7 @@ export default function WorkoutRoute() {
   const readOnly = workout.status === 'COMPLETED';
 
   return (
-    <main className="workout-route">
+    <main id="main-content" tabIndex={-1} className="workout-route">
       <section className="workout-sheet" aria-label={`${workout.sourceNameSnapshot ?? 'Workout'} session`}>
         <header className="workout-session-header">
           {readOnly ? <Link className="workout-close-button" to="/" aria-label="Return to Today">‹</Link> : <button className="workout-close-button" type="button" aria-label="Save and return to Today" disabled={saving || completing} onClick={() => void saveAndLeave()}>‹</button>}

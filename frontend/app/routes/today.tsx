@@ -152,7 +152,7 @@ export default function TodayRoute() {
   }
 
   return (
-    <div className="page-shell today-page">
+    <main id="main-content" tabIndex={-1} className="page-shell today-page">
       <div className="page-heading">
         <div className="eyebrow"><span className="status-dot" /> DAILY CHECK-IN</div>
         <h1>Today</h1>
@@ -239,7 +239,7 @@ export default function TodayRoute() {
           </>
         ) : null}
       </section>
-    </div>
+    </main>
   );
 }
 

@@ -220,7 +220,7 @@ function HistoryOverview() {
   }
 
   return (
-    <div className="page-shell secondary-page history-page">
+    <main id="main-content" tabIndex={-1} className="page-shell secondary-page history-page">
       <div className="page-heading">
         <h1>History</h1>
       </div>
@@ -299,7 +299,7 @@ function HistoryOverview() {
           {!workoutCursor && workoutPage * PAGE_SIZE + visibleWorkouts.length >= workouts.length && <p className="history-end">End of workout history.</p>}
         </> : <div className="history-empty compact-empty">No completed workouts yet. Completed sessions will appear here.</div>}
       </section>
-    </div>
+    </main>
   );
 }
 
@@ -382,7 +382,7 @@ function WorkoutDetail({ workoutId }: { workoutId: string }) {
   }, [account.preferredWeightUnit, api, workoutId]);
   useEffect(() => { void load(); }, [load]);
 
-  return <div className="page-shell secondary-page workout-detail-page">
+  return <main id="main-content" tabIndex={-1} className="page-shell secondary-page workout-detail-page">
     <Link className="back-history-link" to="/history/workouts">‹ <span>All workouts</span></Link>
     {loading ? <section className="card secondary-card"><p className="history-state" role="status">Loading workout…</p></section> : error ? (
       <section className="card secondary-card"><div className="form-error history-error" role="alert">{error}</div><button className="secondary-button" type="button" onClick={() => void load()}>Try again</button></section>
@@ -408,5 +408,5 @@ function WorkoutDetail({ workoutId }: { workoutId: string }) {
         </ol> : <div className="history-empty">No exercises were recorded for this session.</div>}
       </section>
     </> : null}
-  </div>;
+  </main>;
 }
